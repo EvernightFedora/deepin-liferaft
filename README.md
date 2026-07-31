@@ -1,6 +1,8 @@
 # Deepin Liferaft
 
-![Deepin Liferaft icon](data/icons/deepin-liferaft.svg)
+<p align="center">
+  <img src="data/icons/deepin-liferaft.svg" width="128" alt="Deepin Liferaft icon">
+</p>
 
 Deepin Liferaft provides a macOS-style "Your system has run out of application memory" dialog for Deepin. It detects sustained memory pressure, pauses application cgroups before the desktop becomes unusable, and lets the user resume or force quit an application.
 
