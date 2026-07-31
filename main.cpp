@@ -691,8 +691,10 @@ int main(int argc, char *argv[]) {
     if (signalFd < 0) return 1;
     LiferaftApplication a(argc, argv);
     a.setApplicationName("deepin-liferaft");
+    a.setApplicationDisplayName("内存救生圈");
+    a.loadTranslator();
     a.setQuitOnLastWindowClosed(false); // 关弹窗不退出, 继续后台监控
-    // ponytail: 不设主题, DTK 默认跟随系统; 前提: 带会话环境启动 (见 test 脚本)
+    // ponytail: DTK 主题菜单原生保存三态选择; 初始值跟随系统
     ForceQuitWindow w(signalFd);
     a.setQuitGuard([&w] { return w.unfreezeAll(); });
     // ponytail: 默认显示窗口; --hidden 后台常驻, 压力触发才弹
