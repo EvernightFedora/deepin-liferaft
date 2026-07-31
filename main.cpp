@@ -693,12 +693,13 @@ int main(int argc, char *argv[]) {
     a.setApplicationName("deepin-liferaft");
     a.setApplicationDisplayName("内存救生圈");
     a.loadTranslator();
-    a.setQuitOnLastWindowClosed(false); // 关弹窗不退出, 继续后台监控
+    const bool hidden = a.arguments().contains("--hidden");
+    a.setQuitOnLastWindowClosed(!hidden);
     // ponytail: DTK 主题菜单原生保存三态选择; 初始值跟随系统
     ForceQuitWindow w(signalFd);
     a.setQuitGuard([&w] { return w.unfreezeAll(); });
     // ponytail: 默认显示窗口; --hidden 后台常驻, 压力触发才弹
-    if (!a.arguments().contains("--hidden")) w.show();
+    if (!hidden) w.show();
     const int result = a.exec();
     if (signalFd >= 0) ::close(signalFd);
     return result;
