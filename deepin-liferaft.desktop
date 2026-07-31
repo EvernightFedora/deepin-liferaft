@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Deepin Liferaft
+Name[zh_CN]=内存救生圈
+Comment=Recover from application memory pressure
+Comment[zh_CN]=在应用内存压力过高时恢复系统响应
+Exec=deepin-liferaft
+Icon=deepin-liferaft
+Terminal=false
+Categories=System;
+StartupNotify=true

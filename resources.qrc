@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file alias="deepin-liferaft.svg">data/icons/deepin-liferaft.svg</file>
+  </qresource>
+</RCC>

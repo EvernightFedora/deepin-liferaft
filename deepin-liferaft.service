@@ -1,0 +1,13 @@
+[Unit]
+Description=Deepin memory-pressure force-quit monitor
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/deepin-liferaft --hidden
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

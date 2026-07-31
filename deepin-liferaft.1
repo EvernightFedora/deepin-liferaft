@@ -1,0 +1,40 @@
+.TH DEEPIN-LIFERAFT 1 "July 2026" "deepin-liferaft 0.1.0" "User Commands"
+.SH NAME
+deepin-liferaft \- monitor memory pressure and present a force-quit dialog
+.SH SYNOPSIS
+.B deepin-liferaft
+.RI [ --hidden ]
+.br
+.B deepin-liferaft --self-test
+.SH DESCRIPTION
+.B deepin-liferaft
+monitors the current systemd user cgroup for Fedora-style systemd-oomd memory pressure and swap conditions.
+When pressure remains unsafe, it freezes selected DDE application cgroups and opens a macOS-style dialog that can resume or force quit them.
+.PP
+Closing the dialog, stopping the service, or sending SIGTERM or SIGINT thaws every cgroup frozen by this process before exit.
+.SH OPTIONS
+.TP
+.B --hidden
+Run the pressure monitor without showing the dialog at startup. This is the mode used by the systemd user service.
+.TP
+.B --self-test
+Run built-in policy, parsing, formatting, and freezer ownership checks, then exit with status zero on success.
+.SH FILES
+.TP
+.I /usr/lib/systemd/user/deepin-liferaft.service
+Systemd user service that starts the monitor with
+.BR --hidden .
+.TP
+.I /sys/fs/cgroup/user.slice/user-UID.slice/user@UID.service/
+User cgroup from which memory pressure, reclaim, memory, and swap data are read.
+.SH SIGNALS
+.B SIGTERM
+and
+.B SIGINT
+request a clean shutdown. Owned frozen cgroups are thawed before the process exits.
+.SH SEE ALSO
+.BR systemd-oomd (8),
+.BR systemd.resource-control (5),
+.BR systemd.service (5)
+.SH AUTHOR
+Ston Jia <ston.jia@outlook.com>
