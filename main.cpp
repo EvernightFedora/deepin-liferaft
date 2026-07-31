@@ -145,6 +145,25 @@ static QString unescapeUnit(QString text) {
     return text;
 }
 
+static std::optional<QString> appIdFromUnit(const QString &unit) {
+    QString appId;
+    if (unit.startsWith("app-DDE-")) {
+        appId = unit.mid(8).section('@', 0, 0);
+    } else if (unit.startsWith("app-") && unit.endsWith(".scope")) {
+        appId = unit.mid(4, unit.size() - 10);
+        const int separator = appId.lastIndexOf('-');
+        bool pidOk = false;
+        appId.mid(separator + 1).toUInt(&pidOk);
+        if (separator <= 0 || !pidOk) return std::nullopt;
+        appId.truncate(separator);
+    } else {
+        return std::nullopt;
+    }
+    appId = unescapeUnit(appId);
+    if (appId.endsWith(".autostart")) appId.chop(10);
+    return appId;
+}
+
 static QStringList desktopInfo(const QString &appId) {
     static QHash<QString, QStringList> cache;
     if (cache.contains(appId)) return cache.value(appId);
@@ -210,13 +229,16 @@ static int createSignalFd() {
     return fd;
 }
 
-// DDE 每个 GUI 应用一个 app-DDE-* cgroup; 子进程资源天然归入终端或浏览器所属应用。
+// DDE 启动组和应用自建 scope 都是独立的应用资源边界。
 static std::optional<QList<Proc>> appProcs(bool requireSwap = false, bool requirePgscan = false) {
     QList<Proc> out;
     const QString root = userCgroupPath() + "/app.slice";
     const QDir appRoot(root);
     if (!appRoot.exists()) return std::nullopt;
-    for (const auto &unit : appRoot.entryList({"app-DDE-*"}, QDir::Dirs | QDir::NoDotAndDotDot)) {
+    for (const auto &unit : appRoot.entryList({"app-DDE-*", "app-*.scope"},
+                                              QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const auto appId = appIdFromUnit(unit);
+        if (!appId) continue;
         const QString cgroup = root + "/" + unit;
         const auto memory = fileValue(cgroup + "/memory.current");
         const auto swap = fileValue(cgroup + "/memory.swap.current");
@@ -224,18 +246,16 @@ static std::optional<QList<Proc>> appProcs(bool requireSwap = false, bool requir
         if (!memory || (requireSwap && !swap) || (requirePgscan && !pgscan)) return std::nullopt;
         if (!*memory) continue;
 
-        QString appId = unescapeUnit(unit.mid(8).section('@', 0, 0));
-        if (appId.endsWith(".autostart")) appId.chop(10);
-        const auto desktop = desktopInfo(appId);
+        const auto desktop = desktopInfo(*appId);
         QString name = desktop.value(0);
-        if (name.isEmpty()) name = appId;
+        if (name.isEmpty()) name = *appId;
         out << Proc{cgroup,
                     *memory,
                     swap.value_or(0),
                     pgscan,
                     0,
                     name,
-                    desktop.value(1, appId)};
+                    desktop.value(1, *appId)};
     }
     return out;
 }
@@ -292,6 +312,9 @@ static bool selfTest() {
     const QList<Proc> swapCandidate{{{}, 1, 6, 0, 0, {}, {}}};
     const QList<Proc> exactSwapLimit{{{}, 1, 5, 0, 0, {}, {}}};
     return unescapeUnit("google\\x2dchrome") == "google-chrome"
+        && appIdFromUnit("app-DDE-google\\x2dchrome@123.service") == "google-chrome"
+        && appIdFromUnit("app-code-113545.scope") == "code"
+        && !appIdFromUnit("app-code.scope")
         && parseFullAvg10("some avg10=99.00 avg60=1.00\nfull avg10=50.25 avg60=2.00\n") == 50.25
         && selectTrigger(50.0, 20000, true, {}, {}) == Trigger::None
         && selectTrigger(50.1, 19999, true, {}, {}) == Trigger::None
