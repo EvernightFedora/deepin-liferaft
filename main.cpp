@@ -2,6 +2,7 @@
 // Fedora systemd-oomd 策略触发 → 自动弹出，按 DDE 应用 cgroup 内存排序。
 #include <DApplication>
 #include <DMainWindow>
+#include <DTitlebar>
 #include <DPushButton>
 #include <DSuggestButton>
 #include <DLabel>
@@ -408,7 +409,10 @@ public:
     void ensureUi() {
         if (m_table) return;
 
-        setWindowIcon(QIcon(":/icons/deepin-liferaft.svg"));
+        const QIcon icon(":/icons/deepin-liferaft.svg");
+        setWindowIcon(icon);
+        titlebar()->setIcon(icon);
+        titlebar()->setTitle(windowTitle());
         auto *central = new QWidget;
         auto *vbox = new QVBoxLayout(central);
         vbox->setContentsMargins(24, 20, 24, 20);
