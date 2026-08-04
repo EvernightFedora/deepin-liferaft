@@ -477,6 +477,13 @@ public:
         m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
         m_table->setSelectionMode(QAbstractItemView::SingleSelection);
         m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        m_table->setFocusPolicy(Qt::NoFocus);
+        QPalette tablePal = m_table->palette();
+        tablePal.setColor(QPalette::Inactive, QPalette::Highlight,
+                          tablePal.color(QPalette::Active, QPalette::Highlight));
+        tablePal.setColor(QPalette::Inactive, QPalette::HighlightedText,
+                          tablePal.color(QPalette::Active, QPalette::HighlightedText));
+        m_table->setPalette(tablePal);
         m_table->setIconSize(QSize(24, 24));
         vbox->addWidget(m_table);
 
