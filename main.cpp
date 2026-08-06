@@ -367,7 +367,7 @@ public:
         const bool selected = option.state.testFlag(QStyle::State_Selected);
         const QColor normal = option.palette.color(selected ? QPalette::HighlightedText : QPalette::Text);
         const QFontMetrics metrics(option.font);
-        const QString suffix = paused ? QStringLiteral("（已暂停）") : QString();
+        const QString suffix = paused ? QStringLiteral("(Paused)") : QString();
         const int suffixWidth = metrics.horizontalAdvance(suffix);
         const int textX = iconRect.right() + 7;
         const int available = std::max(0, option.rect.right() - textX - suffixWidth - 4);
@@ -416,7 +416,7 @@ private:
 class ForceQuitWindow : public QMainWindow {
 public:
     explicit ForceQuitWindow(int signalFd) {
-        setWindowTitle(L("强制退出应用程序"));
+        setWindowTitle(L("Force quit the application"));
         setFixedSize(520, 460);
 
         if (const auto pgscan = memoryStatValue(userCgroupPath(), "pgscan")) {
@@ -456,12 +456,12 @@ public:
         heading->addWidget(warning, 0, Qt::AlignTop);
 
         auto *headingText = new QVBoxLayout;
-        auto *title = new QLabel(L("系统内存已耗尽。"));
+        auto *title = new QLabel(L("System memory is shortaged."));
         QFont font = title->font();
         font.setPointSize(15);
         font.setBold(true);
         title->setFont(font);
-        auto *sub = new QLabel(L("为避免电脑出现问题，请退出不再使用的应用。"));
+        auto *sub = new QLabel(L("To avoid PC problems, please close applications that are no longer in use."));
         sub->setWordWrap(true);
         QPalette palette = sub->palette();
         palette.setColor(QPalette::WindowText, QColor(80, 80, 85));
@@ -495,8 +495,8 @@ public:
         vbox->addWidget(m_table);
 
         auto *buttons = new QHBoxLayout;
-        m_resumeBtn = new QPushButton(L("恢复"));
-        m_killBtn = new QPushButton(L("强制退出"));
+        m_resumeBtn = new QPushButton(L("Recovery"));
+        m_killBtn = new QPushButton(L("Force Quit"));
         buttons->addStretch();
         buttons->addWidget(m_resumeBtn);
         buttons->addWidget(m_killBtn);
@@ -666,7 +666,7 @@ public:
         int selectedRow = -1;
         for (int i = 0; i < procs.size(); ++i) {
             const bool frozen = m_frozen.contains(procs[i].cgroup);
-            auto *name = new QTableWidgetItem(procs[i].name + (frozen ? L("（已暂停）") : ""));
+            auto *name = new QTableWidgetItem(procs[i].name + (frozen ? L("(Paused)") : ""));
             name->setIcon(QIcon::fromTheme(procs[i].icon,
                                            QIcon::fromTheme("application-x-executable")));
             name->setData(Qt::UserRole, procs[i].cgroup);
@@ -726,8 +726,12 @@ int main(int argc, char *argv[]) {
     const int signalFd = createSignalFd();
     if (signalFd < 0) return 1;
     LiferaftApplication a(argc, argv);
+    
+    // 设置翻译域，使 KLocalizedString 能找到正确的 .mo 文件
+    KLocalizedString::setApplicationDomain(QByteArrayLiteral("deepin-liferaft"));
+
     a.setApplicationName("deepin-liferaft");
-    a.setApplicationDisplayName(L("内存救生圈"));
+    a.setApplicationDisplayName(L("Mem Rescue"));
     const bool hidden = a.arguments().contains("--hidden");
     a.setQuitOnLastWindowClosed(!hidden);
     // ponytail: DTK 主题菜单原生保存三态选择; 初始值跟随系统
