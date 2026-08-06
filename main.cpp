@@ -1,11 +1,10 @@
 // deepin-liferaft: macOS "Your system has run out of application memory" 对话框的 DTK 克隆
 // Fedora systemd-oomd 策略触发 → 自动弹出，按 DDE 应用 cgroup 内存排序。
-#include <DApplication>
-#include <DMainWindow>
-#include <DTitlebar>
-#include <DPushButton>
-#include <DSuggestButton>
-#include <DLabel>
+#include <QApplication>
+#include <QMainWindow>
+#include <QLabel>
+#include <QPushButton>
+#include <QSocketNotifier>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -17,7 +16,6 @@
 #include <QSet>
 #include <QHash>
 #include <QElapsedTimer>
-#include <QSocketNotifier>
 #include <QTemporaryDir>
 #include <QStandardPaths>
 #include <QSettings>
@@ -25,7 +23,6 @@
 #include <QStyle>
 #include <QStyledItemDelegate>
 #include <QPainter>
-#include <QApplication>
 #include <QCloseEvent>
 #include <QShowEvent>
 #include <algorithm>
@@ -36,7 +33,19 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 
-DWIDGET_USE_NAMESPACE
+// Optional KDE Frameworks 6 localization
+#ifdef HAVE_KF6
+#include <KLocalizedString>
+#endif
+
+// Translation helper: prefer KF6 i18n(), fall back to QObject::tr()
+#ifndef L
+#ifdef HAVE_KF6
+#define L(x) i18n(x)
+#else
+#define L(x) QObject::tr(x)
+#endif
+#endif
 
 static const double PRESSURE_LIMIT = 50.0; // Fedora user@.service policy
 static const int PRESSURE_DURATION_MS = 20000;
@@ -257,7 +266,7 @@ static std::optional<QList<Proc>> appProcs(bool requireSwap = false, bool requir
                     name,
                     desktop.value(1, *appId)};
     }
-    return out;
+                            return out;
 }
 
 static quint64 pgscanDelta(const std::optional<quint64> &previous,
@@ -376,9 +385,9 @@ public:
     }
 };
 
-class LiferaftApplication : public DApplication {
+class LiferaftApplication : public QApplication {
 public:
-    using DApplication::DApplication;
+    using QApplication::QApplication;
 
     void setQuitGuard(std::function<bool()> guard) {
         m_quitGuard = std::move(guard);
@@ -396,7 +405,7 @@ protected:
             }
             return true;
         }
-        return DApplication::event(event);
+        return QApplication::event(event);
     }
 
 private:
@@ -404,10 +413,10 @@ private:
     bool m_quitRetryScheduled = false;
 };
 
-class ForceQuitWindow : public DMainWindow {
+class ForceQuitWindow : public QMainWindow {
 public:
     explicit ForceQuitWindow(int signalFd) {
-        setWindowTitle("强制退出应用程序");
+        setWindowTitle(L("强制退出应用程序"));
         setFixedSize(520, 460);
 
         if (const auto pgscan = memoryStatValue(userCgroupPath(), "pgscan")) {
@@ -418,7 +427,7 @@ public:
         if (signalFd >= 0) {
             auto *notifier = new QSocketNotifier(signalFd, QSocketNotifier::Read, this);
             connect(notifier, &QSocketNotifier::activated, this, [this, signalFd] {
-                signalfd_siginfo info;
+                signalfd_siginfo info; 
                 while (::read(signalFd, &info, sizeof(info)) == sizeof(info)) {}
                 requestShutdown();
             });
@@ -434,27 +443,25 @@ public:
 
         const QIcon icon(":/icons/deepin-liferaft.svg");
         setWindowIcon(icon);
-        titlebar()->setIcon(icon);
-        titlebar()->setTitle(windowTitle());
         auto *central = new QWidget;
         auto *vbox = new QVBoxLayout(central);
         vbox->setContentsMargins(24, 20, 24, 20);
         vbox->setSpacing(10);
 
         auto *heading = new QHBoxLayout;
-        auto *warning = new DLabel;
+        auto *warning = new QLabel;
         warning->setFixedSize(54, 54);
         warning->setAlignment(Qt::AlignCenter);
         warning->setPixmap(style()->standardIcon(QStyle::SP_MessageBoxWarning).pixmap(48, 48));
         heading->addWidget(warning, 0, Qt::AlignTop);
 
         auto *headingText = new QVBoxLayout;
-        auto *title = new DLabel("系统内存已耗尽。");
+        auto *title = new QLabel(L("系统内存已耗尽。"));
         QFont font = title->font();
         font.setPointSize(15);
         font.setBold(true);
         title->setFont(font);
-        auto *sub = new DLabel("为避免电脑出现问题，请退出不再使用的应用。");
+        auto *sub = new QLabel(L("为避免电脑出现问题，请退出不再使用的应用。"));
         sub->setWordWrap(true);
         QPalette palette = sub->palette();
         palette.setColor(QPalette::WindowText, QColor(80, 80, 85));
@@ -488,9 +495,8 @@ public:
         vbox->addWidget(m_table);
 
         auto *buttons = new QHBoxLayout;
-        m_resumeBtn = new DPushButton("恢复");
-        m_killBtn = new DSuggestButton;
-        m_killBtn->setText("强制退出");
+        m_resumeBtn = new QPushButton(L("恢复"));
+        m_killBtn = new QPushButton(L("强制退出"));
         buttons->addStretch();
         buttons->addWidget(m_resumeBtn);
         buttons->addWidget(m_killBtn);
@@ -498,7 +504,7 @@ public:
         setCentralWidget(central);
 
         connect(m_table, &QTableWidget::itemSelectionChanged, this, [this] { updateButtons(); });
-        connect(m_resumeBtn, &DPushButton::clicked, this, [this] {
+        connect(m_resumeBtn, &QPushButton::clicked, this, [this] {
             const int row = m_table->currentRow();
             if (row < 0) return;
             const QString cgroup = m_table->item(row, 0)->data(Qt::UserRole).toString();
@@ -506,7 +512,7 @@ public:
             sampleApps();
             refresh();
         });
-        connect(m_killBtn, &DPushButton::clicked, this, [this] {
+        connect(m_killBtn, &QPushButton::clicked, this, [this] {
             const int row = m_table->currentRow();
             if (row < 0) return;
             const QString cgroup = m_table->item(row, 0)->data(Qt::UserRole).toString();
@@ -660,7 +666,7 @@ public:
         int selectedRow = -1;
         for (int i = 0; i < procs.size(); ++i) {
             const bool frozen = m_frozen.contains(procs[i].cgroup);
-            auto *name = new QTableWidgetItem(procs[i].name + (frozen ? "（已暂停）" : ""));
+            auto *name = new QTableWidgetItem(procs[i].name + (frozen ? L("（已暂停）") : ""));
             name->setIcon(QIcon::fromTheme(procs[i].icon,
                                            QIcon::fromTheme("application-x-executable")));
             name->setData(Qt::UserRole, procs[i].cgroup);
@@ -684,7 +690,7 @@ protected:
         ensureUi();
         sampleApps();
         refresh();
-        DMainWindow::showEvent(event);
+        QMainWindow::showEvent(event);
     }
 
     void closeEvent(QCloseEvent *event) override {
@@ -694,14 +700,14 @@ protected:
             return;
         }
         m_postAction.start();
-        DMainWindow::closeEvent(event);
+        QMainWindow::closeEvent(event);
         if (event->isAccepted()) releaseUi();
     }
 
 private:
     QTableWidget *m_table = nullptr;
-    DPushButton *m_resumeBtn = nullptr;
-    DPushButton *m_killBtn = nullptr;
+    QPushButton *m_resumeBtn = nullptr;
+    QPushButton *m_killBtn = nullptr;
     QTimer *m_timer;
     QList<Proc> m_apps;
     QSet<QString> m_frozen;
@@ -721,8 +727,7 @@ int main(int argc, char *argv[]) {
     if (signalFd < 0) return 1;
     LiferaftApplication a(argc, argv);
     a.setApplicationName("deepin-liferaft");
-    a.setApplicationDisplayName("内存救生圈");
-    a.loadTranslator();
+    a.setApplicationDisplayName(L("内存救生圈"));
     const bool hidden = a.arguments().contains("--hidden");
     a.setQuitOnLastWindowClosed(!hidden);
     // ponytail: DTK 主题菜单原生保存三态选择; 初始值跟随系统
