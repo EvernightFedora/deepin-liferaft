@@ -1,5 +1,6 @@
 // deepin-liferaft: macOS "Your system has run out of application memory" 对话框的 DTK 克隆
 // Fedora systemd-oomd 策略触发 → 自动弹出，按 DDE 应用 cgroup 内存排序。
+// 修复 xdg-desktop-portal 注册问题：需要配套的 .desktop 文件。
 #include <QApplication>
 #include <QMainWindow>
 #include <QLabel>
@@ -721,23 +722,26 @@ private:
 };
 
 int main(int argc, char *argv[]) {
+    // 清除可能干扰的 XDG_APP_ID 环境变量，避免与 setDesktopFileName 冲突
+    unsetenv("XDG_APP_ID");
+
     if (argc == 2 && QByteArray(argv[1]) == "--self-test") return selfTest() ? 0 : 1;
 
     const int signalFd = createSignalFd();
     if (signalFd < 0) return 1;
     LiferaftApplication a(argc, argv);
-    
-    // 设置翻译域，使 KLocalizedString 能找到正确的 .mo 文件
+
+    // 必须在任何可能触发门户的调用之前设置应用名和桌面文件名
+    a.setApplicationName("deepin-liferaft");
+    a.setDesktopFileName("deepin-liferaft");  // 必须与 .desktop 文件名一致
+
     KLocalizedString::setApplicationDomain(QByteArrayLiteral("deepin-liferaft"));
 
-    a.setApplicationName("deepin-liferaft");
     a.setApplicationDisplayName(L("Mem Rescue"));
     const bool hidden = a.arguments().contains("--hidden");
     a.setQuitOnLastWindowClosed(!hidden);
-    // ponytail: DTK 主题菜单原生保存三态选择; 初始值跟随系统
     ForceQuitWindow w(signalFd);
     a.setQuitGuard([&w] { return w.unfreezeAll(); });
-    // ponytail: 默认显示窗口; --hidden 后台常驻, 压力触发才弹
     if (!hidden) w.show();
     const int result = a.exec();
     if (signalFd >= 0) ::close(signalFd);
