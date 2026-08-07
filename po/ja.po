@@ -3,45 +3,111 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-06 09:23+0800\n"
-"PO-Revision-Date: 2026-08-06 09:25+0800\n"
-"Last-Translator: \n"
+"POT-Creation-Date: 2026-08-07 10:18+0800\n"
+"PO-Revision-Date: 2026-08-07 12:00+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: KairikiFedora Software Team <13278297951@sina.cn>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.9\n"
 
-#: main.cpp:419
-msgid "Force quit the application"
+#: main.cpp:429
+msgid "Force Quit Applications"
 msgstr "アプリケーションを強制終了"
 
-#: main.cpp:459
-msgid "System memory is shortaged."
-msgstr "システムメモリが不足しています。"
+#: main.cpp:469
+msgid "Your system has run out of application memory."
+msgstr "システムのアプリケーションメモリが不足しています。"
 
-#: main.cpp:464
-msgid "To avoid PC problems, please close applications that are no longer in use."
-msgstr "PCの問題を避けるために、使用していないアプリケーションを閉じてください。"
+#: main.cpp:475
+msgid ""
+"To avoid problems with your computer, quit applications you are no longer "
+"using."
+msgstr "コンピュータの問題を避けるため、使用していないアプリケーションを終了してください。"
 
-#: main.cpp:498
-msgid "Recovery"
-msgstr "回復"
+#: main.cpp:509
+msgid "Resume"
+msgstr "再開"
 
-#: main.cpp:499
+#: main.cpp:511
 msgid "Force Quit"
 msgstr "強制終了"
 
-#: main.cpp:669
+#: main.cpp:525
+msgid "Resumed %1"
+msgstr "%1 を再開しました"
+
+#: main.cpp:527
+msgid "Resume failed for %1"
+msgstr "%1 の再開に失敗しました"
+
+#: main.cpp:541
+msgid "Force quit %1: kill=%2 thaw=%3"
+msgstr "%1 を強制終了: kill=%2 thaw=%3"
+
+#: main.cpp:543
+msgid "Force quit %1 failed: kill=%2 thaw=%3"
+msgstr "%1 の強制終了に失敗: kill=%2 thaw=%3"
+
+#: main.cpp:600
+msgid "Memory pressure above limit: %1%"
+msgstr "メモリ圧力が制限を超えています: %1%"
+
+#: main.cpp:604
+msgid "Memory pressure back below limit: %1%"
+msgstr "メモリ圧力が制限以下に戻りました: %1%"
+
+#: main.cpp:622
+msgid "Invalid samples: pressure=%1 memory=%2 userPgscan=%3 appSample=%4"
+msgstr "無効なサンプル: pressure=%1 memory=%2 userPgscan=%3 appSample=%4"
+
+#: main.cpp:633
+msgid ""
+"Trigger %1: pressure=%2%% duration=%3ms recentReclaim=%4 memUsed=%5%% "
+"swapUsed=%6%% apps=%7"
+msgstr "トリガー %1: pressure=%2%% duration=%3ms recentReclaim=%4 memUsed=%5%% swapUsed=%6%% apps=%7"
+
+#: main.cpp:671
+msgid "Frozen %1 (%2) trigger=%3 reclaim=%4MB swap=%5MB memory=%6MB"
+msgstr "%1 (%2) を凍結しました trigger=%3 reclaim=%4MB swap=%5MB memory=%6MB"
+
+#: main.cpp:680
+msgid "Cannot freeze %1 (%2): unreadable or frozen by another component"
+msgstr "%1 (%2) を凍結できません: 読み取り不能または他のコンポーネントにより凍結済み"
+
+#: main.cpp:695
+msgid "Shutdown requested, thawing %1 frozen cgroup(s)"
+msgstr "シャットダウンが要求されました、%1 個の凍結されたcgroupを解凍中"
+
+#: main.cpp:701
+msgid "All frozen cgroups thawed, exiting"
+msgstr "すべての凍結されたcgroupが解凍されました、終了します"
+
+#: main.cpp:704
+msgid "Thaw incomplete (%1 cgroup(s) remain), retrying"
+msgstr "解凍が不完全です（%1 個のcgroupが残っています）、再試行"
+
+#: main.cpp:734
 msgid "(Paused)"
 msgstr "（一時停止）"
 
-#: main.cpp:730
-msgid "Mem Rescue"
-msgstr "メムレスキュー"
+#: main.cpp:762
+msgid "Window closing, thawing %1 frozen cgroup(s)"
+msgstr "ウィンドウを閉じています、%1 個の凍結されたcgroupを解凍中"
+
+#: main.cpp:764
+msgid "Close blocked: thaw failed, retrying"
+msgstr "閉塞ブロック: 解凍に失敗、再試行"
+
+#: main.cpp:807
+msgid "Deepin Liferaft"
+msgstr "Deepin Liferaft"
+
+#: main.cpp:810
+msgid "Deepin Liferaft started: pid=%1 mode=%2"
+msgstr "Deepin Liferaft が起動しました: pid=%1 mode=%2"

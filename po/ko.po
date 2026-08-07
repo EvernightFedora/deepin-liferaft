@@ -3,112 +3,111 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-07 10:18+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2026-08-07 12:00+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Language-Team: KairikiFedora Software Team <13278297951@sina.cn>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: main.cpp:429
 msgid "Force Quit Applications"
-msgstr ""
+msgstr "응용 프로그램 강제 종료"
 
 #: main.cpp:469
 msgid "Your system has run out of application memory."
-msgstr ""
+msgstr "시스템의 응용 프로그램 메모리가 부족합니다."
 
 #: main.cpp:475
 msgid ""
 "To avoid problems with your computer, quit applications you are no longer "
 "using."
-msgstr ""
+msgstr "컴퓨터 문제를 방지하려면 사용하지 않는 응용 프로그램을 종료하십시오."
 
 #: main.cpp:509
 msgid "Resume"
-msgstr ""
+msgstr "재개"
 
 #: main.cpp:511
 msgid "Force Quit"
-msgstr ""
+msgstr "강제 종료"
 
 #: main.cpp:525
 msgid "Resumed %1"
-msgstr ""
+msgstr "%1 재개됨"
 
 #: main.cpp:527
 msgid "Resume failed for %1"
-msgstr ""
+msgstr "%1 재개 실패"
 
 #: main.cpp:541
 msgid "Force quit %1: kill=%2 thaw=%3"
-msgstr ""
+msgstr "%1 강제 종료: kill=%2 thaw=%3"
 
 #: main.cpp:543
 msgid "Force quit %1 failed: kill=%2 thaw=%3"
-msgstr ""
+msgstr "%1 강제 종료 실패: kill=%2 thaw=%3"
 
 #: main.cpp:600
 msgid "Memory pressure above limit: %1%"
-msgstr ""
+msgstr "메모리 압력이 제한 초과: %1%"
 
 #: main.cpp:604
 msgid "Memory pressure back below limit: %1%"
-msgstr ""
+msgstr "메모리 압력이 제한 미만으로 복귀: %1%"
 
 #: main.cpp:622
 msgid "Invalid samples: pressure=%1 memory=%2 userPgscan=%3 appSample=%4"
-msgstr ""
+msgstr "잘못된 샘플: pressure=%1 memory=%2 userPgscan=%3 appSample=%4"
 
 #: main.cpp:633
 msgid ""
 "Trigger %1: pressure=%2%% duration=%3ms recentReclaim=%4 memUsed=%5%% "
 "swapUsed=%6%% apps=%7"
-msgstr ""
+msgstr "트리거 %1: pressure=%2%% duration=%3ms recentReclaim=%4 memUsed=%5%% swapUsed=%6%% apps=%7"
 
 #: main.cpp:671
 msgid "Frozen %1 (%2) trigger=%3 reclaim=%4MB swap=%5MB memory=%6MB"
-msgstr ""
+msgstr "%1 (%2) 동결됨 trigger=%3 reclaim=%4MB swap=%5MB memory=%6MB"
 
 #: main.cpp:680
 msgid "Cannot freeze %1 (%2): unreadable or frozen by another component"
-msgstr ""
+msgstr "%1 (%2) 동결 불가: 읽을 수 없거나 다른 구성 요소에 의해 동결됨"
 
 #: main.cpp:695
 msgid "Shutdown requested, thawing %1 frozen cgroup(s)"
-msgstr ""
+msgstr "종료 요청됨, %1개의 동결된 cgroup 해동 중"
 
 #: main.cpp:701
 msgid "All frozen cgroups thawed, exiting"
-msgstr ""
+msgstr "모든 동결된 cgroup 해동됨, 종료"
 
 #: main.cpp:704
 msgid "Thaw incomplete (%1 cgroup(s) remain), retrying"
-msgstr ""
+msgstr "해동 불완전 (%1 cgroup 남음), 재시도"
 
 #: main.cpp:734
 msgid "(Paused)"
-msgstr ""
+msgstr "(일시 중지)"
 
 #: main.cpp:762
 msgid "Window closing, thawing %1 frozen cgroup(s)"
-msgstr ""
+msgstr "창 닫는 중, %1개의 동결된 cgroup 해동 중"
 
 #: main.cpp:764
 msgid "Close blocked: thaw failed, retrying"
-msgstr ""
+msgstr "닫기 차단됨: 해동 실패, 재시도"
 
 #: main.cpp:807
 msgid "Deepin Liferaft"
-msgstr ""
+msgstr "Deepin Liferaft"
 
 #: main.cpp:810
 msgid "Deepin Liferaft started: pid=%1 mode=%2"
-msgstr ""
+msgstr "Deepin Liferaft 시작됨: pid=%1 mode=%2"

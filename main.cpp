@@ -1,6 +1,5 @@
-// deepin-liferaft: macOS "Your system has run out of application memory" 对话框的 DTK 克隆
+// deepin-liferaft: macOS "Your system has run out of application memory" 对话框的 Qt/KF6 克隆
 // Fedora systemd-oomd 策略触发 → 自动弹出，按 DDE 应用 cgroup 内存排序。
-// 修复 xdg-desktop-portal 注册问题：需要配套的 .desktop 文件。
 #include <QApplication>
 #include <QMainWindow>
 #include <QLabel>
@@ -34,12 +33,12 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 
-// Optional KDE Frameworks 6 localization
+// KDE Framework 6 本地化（可选）
 #ifdef HAVE_KF6
 #include <KLocalizedString>
 #endif
 
-// Translation helper: prefer KF6 i18n(), fall back to QObject::tr()
+// 翻译辅助宏：优先 KF6 i18n()，否则回退到 QObject::tr()
 #ifndef L
 #ifdef HAVE_KF6
 #define L(x) i18n(x)
@@ -267,7 +266,7 @@ static std::optional<QList<Proc>> appProcs(bool requireSwap = false, bool requir
                     name,
                     desktop.value(1, *appId)};
     }
-                            return out;
+    return out;
 }
 
 static quint64 pgscanDelta(const std::optional<quint64> &previous,
@@ -293,6 +292,15 @@ static Trigger selectTrigger(double pressure, qint64 pressureDuration, bool rece
 static QString fmtSize(quint64 bytes) {
     if (bytes >= (1ull << 30)) return QString::number(bytes / 1073741824.0, 'f', 1) + " GB";
     return QString::number(bytes / 1048576.0, 'f', 1) + " MB";
+}
+
+static QString triggerName(Trigger trigger) {
+    switch (trigger) {
+    case Trigger::Swap: return QStringLiteral("swap");
+    case Trigger::Pressure: return QStringLiteral("pressure");
+    case Trigger::None: return QStringLiteral("none");
+    }
+    return QStringLiteral("unknown");
 }
 
 static bool freezerSelfTest() {
@@ -415,9 +423,10 @@ private:
 };
 
 class ForceQuitWindow : public QMainWindow {
+    Q_OBJECT
 public:
     explicit ForceQuitWindow(int signalFd) {
-        setWindowTitle(L("Force quit the application"));
+        setWindowTitle(L("Force Quit Applications"));
         setFixedSize(520, 460);
 
         if (const auto pgscan = memoryStatValue(userCgroupPath(), "pgscan")) {
@@ -428,7 +437,7 @@ public:
         if (signalFd >= 0) {
             auto *notifier = new QSocketNotifier(signalFd, QSocketNotifier::Read, this);
             connect(notifier, &QSocketNotifier::activated, this, [this, signalFd] {
-                signalfd_siginfo info; 
+                signalfd_siginfo info;
                 while (::read(signalFd, &info, sizeof(info)) == sizeof(info)) {}
                 requestShutdown();
             });
@@ -457,12 +466,13 @@ public:
         heading->addWidget(warning, 0, Qt::AlignTop);
 
         auto *headingText = new QVBoxLayout;
-        auto *title = new QLabel(L("System memory is shortaged."));
+        auto *title = new QLabel(L("Your system has run out of application memory."));
         QFont font = title->font();
         font.setPointSize(15);
         font.setBold(true);
         title->setFont(font);
-        auto *sub = new QLabel(L("To avoid PC problems, please close applications that are no longer in use."));
+        title->setWordWrap(true);
+        auto *sub = new QLabel(L("To avoid problems with your computer, quit applications you are no longer using."));
         sub->setWordWrap(true);
         QPalette palette = sub->palette();
         palette.setColor(QPalette::WindowText, QColor(80, 80, 85));
@@ -496,8 +506,9 @@ public:
         vbox->addWidget(m_table);
 
         auto *buttons = new QHBoxLayout;
-        m_resumeBtn = new QPushButton(L("Recovery"));
-        m_killBtn = new QPushButton(L("Force Quit"));
+        m_resumeBtn = new QPushButton(L("Resume"));
+        m_killBtn = new QPushButton;
+        m_killBtn->setText(L("Force Quit"));
         buttons->addStretch();
         buttons->addWidget(m_resumeBtn);
         buttons->addWidget(m_killBtn);
@@ -509,7 +520,12 @@ public:
             const int row = m_table->currentRow();
             if (row < 0) return;
             const QString cgroup = m_table->item(row, 0)->data(Qt::UserRole).toString();
-            if (thawCgroup(cgroup)) m_frozen.remove(cgroup);
+            if (thawCgroup(cgroup)) {
+                m_frozen.remove(cgroup);
+                qInfo() << L("Resumed %1").arg(cgroup);
+            } else {
+                qWarning() << L("Resume failed for %1").arg(cgroup);
+            }
             sampleApps();
             refresh();
         });
@@ -518,8 +534,14 @@ public:
             if (row < 0) return;
             const QString cgroup = m_table->item(row, 0)->data(Qt::UserRole).toString();
             const bool owned = m_frozen.contains(cgroup);
-            if (writeCgroup(cgroup, "cgroup.kill", "1") && (!owned || thawCgroup(cgroup)))
+            const bool killed = writeCgroup(cgroup, "cgroup.kill", "1");
+            const bool thawed = !owned || thawCgroup(cgroup);
+            if (killed && thawed) {
                 m_frozen.remove(cgroup);
+                qInfo() << L("Force quit %1: kill=%2 thaw=%3").arg(cgroup).arg(killed).arg(thawed);
+            } else {
+                qWarning() << L("Force quit %1 failed: kill=%2 thaw=%3").arg(cgroup).arg(killed).arg(thawed);
+            }
             sampleApps();
             refresh();
         });
@@ -573,9 +595,15 @@ public:
 
         const double pressure = psiFullAvg10();
         if (pressure > PRESSURE_LIMIT) {
-            if (!m_pressureSince.isValid()) m_pressureSince.start();
-        } else
+            if (!m_pressureSince.isValid()) {
+                m_pressureSince.start();
+                qInfo() << L("Memory pressure above limit: %1%").arg(pressure, 0, 'f', 1);
+            }
+        } else {
+            if (m_pressureSince.isValid())
+                qInfo() << L("Memory pressure back below limit: %1%").arg(pressure, 0, 'f', 1);
             m_pressureSince.invalidate();
+        }
 
         const SystemMemory memory = systemMemory();
         const bool pressureSampling = pressure > PRESSURE_LIMIT;
@@ -588,12 +616,29 @@ public:
             && m_reclaimSeen.elapsed() <= RECLAIM_WINDOW_MS;
         const qint64 pressureDuration = m_pressureSince.isValid() ? m_pressureSince.elapsed() : -1;
         const bool samplesValid = pressure >= 0 && memory.valid && userPgscanValid && appSampleValid;
+        if (!samplesValid) {
+            if (!m_lastSamplesInvalid) {
+                m_lastSamplesInvalid = true;
+                qWarning() << L("Invalid samples: pressure=%1 memory=%2 userPgscan=%3 appSample=%4")
+                             .arg(pressure >= 0).arg(memory.valid).arg(userPgscanValid).arg(appSampleValid);
+            }
+        } else
+            m_lastSamplesInvalid = false;
         const Trigger trigger = samplesValid
             ? selectTrigger(pressure, pressureDuration, recentReclaim, memory, m_apps)
             : Trigger::None;
         const bool coolingDown = m_postAction.isValid() && m_postAction.elapsed() < POST_ACTION_DELAY_MS;
 
         if (trigger != Trigger::None && !coolingDown && !isVisible()) {
+            qInfo() << L("Trigger %1: pressure=%2%% duration=%3ms recentReclaim=%4 "
+                     "memUsed=%5%% swapUsed=%6%% apps=%7")
+                      .arg(triggerName(trigger))
+                      .arg(pressure, 0, 'f', 1)
+                      .arg(pressureDuration)
+                      .arg(recentReclaim)
+                      .arg(memory.memTotal ? (memory.memTotal - memory.memAvailable) * 100 / memory.memTotal : 0)
+                      .arg(memory.swapTotal ? (memory.swapTotal - memory.swapFree) * 100 / memory.swapTotal : 0)
+                      .arg(m_apps.size());
             refresh();
             freezeCandidates(trigger, memory.swapTotal);
             m_postAction.start();
@@ -622,7 +667,20 @@ public:
             if (trigger == Trigger::Swap && app.swap <= swapThreshold) continue;
             if (ownCgroup == app.cgroup || ownCgroup.startsWith(app.cgroup + '/')) continue;
             if (m_frozen.contains(app.cgroup)) continue;
-            if (freezeOwned(app.cgroup, m_frozen) && ++frozen == 3) break;
+            if (freezeOwned(app.cgroup, m_frozen)) {
+                qInfo() << L("Frozen %1 (%2) trigger=%3 reclaim=%4MB swap=%5MB memory=%6MB")
+                          .arg(app.name)
+                          .arg(app.cgroup)
+                          .arg(triggerName(trigger))
+                          .arg(app.reclaim / 1048576.0, 0, 'f', 1)
+                          .arg(app.swap / 1048576.0, 0, 'f', 1)
+                          .arg(app.memory / 1048576.0, 0, 'f', 1);
+                if (++frozen == 3) break;
+            } else {
+                qWarning() << L("Cannot freeze %1 (%2): unreadable or frozen by another component")
+                             .arg(app.name)
+                             .arg(app.cgroup);
+            }
         }
         refresh();
     }
@@ -634,12 +692,18 @@ public:
     void requestShutdown() {
         if (m_shutdownRequested) return;
         m_shutdownRequested = true;
+        qInfo() << L("Shutdown requested, thawing %1 frozen cgroup(s)").arg(m_frozen.size());
         retryShutdown();
     }
 
     void retryShutdown() {
-        if (unfreezeAll()) qApp->quit();
-        else QTimer::singleShot(250, this, [this] { retryShutdown(); });
+        if (unfreezeAll()) {
+            qInfo() << L("All frozen cgroups thawed, exiting");
+            qApp->quit();
+        } else {
+            qWarning() << L("Thaw incomplete (%1 cgroup(s) remain), retrying").arg(m_frozen.size());
+            QTimer::singleShot(250, this, [this] { retryShutdown(); });
+        }
     }
 
     void updateButtons() {
@@ -667,7 +731,7 @@ public:
         int selectedRow = -1;
         for (int i = 0; i < procs.size(); ++i) {
             const bool frozen = m_frozen.contains(procs[i].cgroup);
-            auto *name = new QTableWidgetItem(procs[i].name + (frozen ? L("(Paused)") : ""));
+            auto *name = new QTableWidgetItem(procs[i].name + (frozen ? L("(Paused)") : QString()));
             name->setIcon(QIcon::fromTheme(procs[i].icon,
                                            QIcon::fromTheme("application-x-executable")));
             name->setData(Qt::UserRole, procs[i].cgroup);
@@ -695,7 +759,9 @@ protected:
     }
 
     void closeEvent(QCloseEvent *event) override {
+        qInfo() << L("Window closing, thawing %1 frozen cgroup(s)").arg(m_frozen.size());
         if (!unfreezeAll()) {
+            qWarning() << L("Close blocked: thaw failed, retrying");
             event->ignore();
             QTimer::singleShot(250, this, [this] { close(); });
             return;
@@ -716,6 +782,7 @@ private:
     quint64 m_lastUserPgscan = 0;
     bool m_hasLastUserPgscan = false;
     bool m_shutdownRequested = false;
+    bool m_lastSamplesInvalid = false;
     QElapsedTimer m_pressureSince;
     QElapsedTimer m_reclaimSeen;
     QElapsedTimer m_postAction;
@@ -730,20 +797,27 @@ int main(int argc, char *argv[]) {
     const int signalFd = createSignalFd();
     if (signalFd < 0) return 1;
     LiferaftApplication a(argc, argv);
-
-    // 必须在任何可能触发门户的调用之前设置应用名和桌面文件名
     a.setApplicationName("deepin-liferaft");
     a.setDesktopFileName("deepin-liferaft");  // 必须与 .desktop 文件名一致
 
+#ifdef HAVE_KF6
     KLocalizedString::setApplicationDomain(QByteArrayLiteral("deepin-liferaft"));
+#endif
 
-    a.setApplicationDisplayName(L("Mem Rescue"));
+    a.setApplicationDisplayName(L("Deepin Liferaft"));
     const bool hidden = a.arguments().contains("--hidden");
     a.setQuitOnLastWindowClosed(!hidden);
+    qInfo() << L("Deepin Liferaft started: pid=%1 mode=%2")
+              .arg(getpid())
+              .arg(hidden ? QStringLiteral("hidden") : QStringLiteral("foreground"));
+    // ponytail: 主题菜单原生保存三态选择; 初始值跟随系统
     ForceQuitWindow w(signalFd);
     a.setQuitGuard([&w] { return w.unfreezeAll(); });
+    // ponytail: 默认显示窗口; --hidden 后台常驻, 压力触发才弹
     if (!hidden) w.show();
     const int result = a.exec();
     if (signalFd >= 0) ::close(signalFd);
     return result;
 }
+
+#include "main.moc"
